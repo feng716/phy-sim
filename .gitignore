@@ -1,0 +1,7 @@
+.vscode
+.xmake
+build
+.clangd
+src/headers/glad
+src/headers/KHR
+src/source/glad.c
