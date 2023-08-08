@@ -22,6 +22,8 @@ struct offset{
     float x;
     float y;
     float z;
+    float windowWidth;
+    float windowHeight;
 };
 glm::vec3 convertAiToGlm(const aiVector3D);
 glm::vec2 convertAiToGlm2D(const aiVector3D);

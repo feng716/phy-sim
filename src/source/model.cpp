@@ -162,7 +162,7 @@ int ShaderProgram::getGLProgram(){
 }
 void model::draw(offset iOffset,float sscale){
     glBindVertexArray(VAO);
-    glm::mat4 proj=glm::perspective(glm::radians(45.f),1.f,0.1f,100.f);
+    glm::mat4 proj=glm::perspective(glm::radians(45.f),(GLfloat)iOffset.windowHeight/iOffset.windowWidth,0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
     glm::mat4 trans=glm::translate(modeltrans,glm::vec3(iOffset.x,0,-iOffset.z));
     

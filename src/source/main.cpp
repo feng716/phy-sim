@@ -21,6 +21,7 @@
  * 
  */
 void init(std::vector<model*>&);
+static float sWindowW,sWindowH;
 void GLAPIENTRY
 MessageCallback( GLenum source,
                  GLenum type,
@@ -29,6 +30,8 @@ MessageCallback( GLenum source,
                  GLsizei length,
                  const GLchar* message,
                  const void* userParam );
+void frameBufferCallBack(GLFWwindow* window,int width,int height);
+
 int main(){
     if(!glfwInit()) return -1;
     //imgui init
@@ -39,7 +42,9 @@ int main(){
         std::cout << "Failed to initialize OpenGL context" << std::endl;
         return -1;
     }
-    glViewport(0,0,1000,1000);
+    glfwSetFramebufferSizeCallback(window, frameBufferCallBack);
+    sWindowH=600;
+    sWindowW=500;
     //gl error callback
     glEnable( GL_DEBUG_OUTPUT );
     glDebugMessageCallback( MessageCallback, 0 );
@@ -52,7 +57,7 @@ int main(){
     std::vector<model*> vModels;
     init(vModels);
     while(!glfwWindowShouldClose(window)){
-        static float scale;
+        static float scale=0.1;
         static offset ofst;
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
@@ -61,7 +66,10 @@ int main(){
         ImGui::SliderFloat("X Axis", &ofst.x, -1,1);
 
         ImGui::SliderFloat("Z Axis", &ofst.z, 0,100);
-        ImGui::SliderFloat("Scale", &scale,0,1);
+        ImGui::SliderFloat("Scale", &scale,0.1,1);
+        ofst.windowHeight=sWindowH;
+        ofst.windowWidth=sWindowW;
+
         ImGui::End();
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -94,3 +102,9 @@ MessageCallback( GLenum source,
             type, severity, message );
 }
 
+
+void frameBufferCallBack(GLFWwindow* window,int width,int height){
+    glViewport(0,0,width,height);
+    sWindowH=width;
+    sWindowW=height;
+}
