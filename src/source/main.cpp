@@ -1,5 +1,6 @@
 #include "glad/glad.h"
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 //gflw
@@ -21,6 +22,7 @@
  * 
  */
 void init(std::vector<model*>&);
+
 static float sWindowW,sWindowH;
 void GLAPIENTRY
 MessageCallback( GLenum source,
@@ -31,7 +33,8 @@ MessageCallback( GLenum source,
                  const GLchar* message,
                  const void* userParam );
 void frameBufferCallBack(GLFWwindow* window,int width,int height);
-
+void keyCallBack(GLFWwindow* window,int key,int sancode,int action,int mods);
+void cursorCallBack(GLFWwindow* window,double xpos,double ypos);
 int main(){
     if(!glfwInit()) return -1;
     //imgui init
@@ -43,6 +46,9 @@ int main(){
         return -1;
     }
     glfwSetFramebufferSizeCallback(window, frameBufferCallBack);
+    glfwSetKeyCallback(window, keyCallBack);
+    glfwSetCursorPosCallback(window, cursorCallBack);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     sWindowH=600;
     sWindowW=500;
     //gl error callback
@@ -107,4 +113,10 @@ void frameBufferCallBack(GLFWwindow* window,int width,int height){
     glViewport(0,0,width,height);
     sWindowH=width;
     sWindowW=height;
+}
+void keyCallBack(GLFWwindow* window,int key,int sancode,int action,int mods){
+    
+}
+void cursorCallBack(GLFWwindow* window,double xpos,double ypos){
+   printf("\rxpos:%f,ypos:%f",xpos,ypos);
 }

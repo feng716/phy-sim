@@ -10,7 +10,6 @@
 
 #include "shader.h"
 #include <imgui.h>
-#include <ostream>
 #include <vector>
 struct uint3{
     unsigned int x;
