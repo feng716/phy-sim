@@ -1,6 +1,5 @@
 #include "model.h"
 #include "glad/glad.h"
-#include <GL/glext.h>
 #include <assimp/Importer.hpp>
 #include <assimp/Logger.hpp>
 #include <assimp/mesh.h>
@@ -21,6 +20,7 @@
 #include <linux/limits.h>
 #include <sstream>
 #include <sys/types.h>
+#include "sceneTransform.h"
 
 glm::vec3 convertAiToGlm(const aiVector3D aivec){
     glm::vec3 temp(aivec.x,aivec.y,aivec.z);
@@ -162,7 +162,7 @@ int ShaderProgram::getGLProgram(){
 }
 void model::draw(offset iOffset,float sscale){
     glBindVertexArray(VAO);
-    glm::mat4 proj=glm::perspective(glm::radians(45.f),(GLfloat)iOffset.windowHeight/iOffset.windowWidth,0.1f,150.f);
+    glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowH()/sceneTransform::getwindowW(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
     glm::mat4 trans=glm::translate(modeltrans,glm::vec3(iOffset.x,0,-iOffset.z));
     
