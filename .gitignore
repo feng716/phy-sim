@@ -5,3 +5,4 @@ build
 src/headers/glad
 src/headers/KHR
 src/source/glad.c
+imgui.ini

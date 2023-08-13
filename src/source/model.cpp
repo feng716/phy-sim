@@ -79,8 +79,6 @@ model::model(char* filePath):
     glBindBuffer(GL_ARRAY_BUFFER,vertex_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,indices_buffer);
     //
-    void* getbuffer=new int[vFace.size()*3];
-    glGetNamedBufferSubData(indices_buffer,0,sizeof(glm::vec3)*vFace.size(),getbuffer);
     glVertexAttribPointer(0,3,GL_FLOAT,false,sizeof(glm::vec2)+2*sizeof(glm::vec3),0);
     glVertexAttribPointer(1,3,GL_FLOAT,false,sizeof(glm::vec2)+2*sizeof(glm::vec3),(void*)sizeof(glm::vec3));
     glVertexAttribPointer(2,2,GL_FLOAT,false,2*sizeof(glm::vec3)+sizeof(glm::vec2),(void*)(2*sizeof(glm::vec3)));
@@ -162,7 +160,7 @@ int ShaderProgram::getGLProgram(){
 }
 void model::draw(offset iOffset,float sscale){
     glBindVertexArray(VAO);
-    glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowH()/sceneTransform::getwindowW(),0.1f,150.f);
+    glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowW()/sceneTransform::getwindowH(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
     glm::mat4 trans=glm::translate(modeltrans,glm::vec3(iOffset.x,0,-iOffset.z));
     

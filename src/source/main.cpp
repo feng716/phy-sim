@@ -64,7 +64,6 @@ int main(){
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
-
     //list of models
     std::vector<model*> vModels;
     init(vModels);
@@ -112,6 +111,7 @@ MessageCallback( GLenum source,
             //type, severity, message );
   spdlog::error("GL CALLBACK:{},type={},severity=0x{},message={}\n",
     ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),type,severity,message);
+    exit(0);
 }
 
 
