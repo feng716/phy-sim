@@ -2,8 +2,10 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <iostream>
 //gflw
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <assimp/scene.h>
@@ -13,20 +15,23 @@
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_impl_vulkan.h>
 #include <imgui.h>
 #include <vector>
 
 #include <spdlog/spdlog.h>
 #include "sceneTransform.h"
+#include "basic.h"
 #include "model.h"
 /**
  * @brief a test
  * 
  */
-void init(std::vector<model*>&);
-
 float sceneTransform::windowW=500,sceneTransform::windowH=600;
 float sceneTransform::cursorXPos=0,sceneTransform::cursorYPos=0;
+#ifndef VULKAN_API
+void init(std::vector<model*>&);
+
 void GLAPIENTRY
 MessageCallback( GLenum source,
                  GLenum type,
@@ -135,3 +140,16 @@ void mouseButtonCallBack(GLFWwindow* window,int button,int action,int mods){
 void glfwErrorCallBack(int errorCode,const char* errorString){
     spdlog::error("GLFWError:{}", errorString);
 }
+#else
+int main(){
+    application app;
+    app.init();
+    try {
+        app.loop();
+    } catch (const std::exception& e) {
+        spdlog::error(e.what());
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+#endif

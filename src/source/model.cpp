@@ -111,6 +111,7 @@ Shader::Shader(GLenum type,char* shaderFilePath){
     const char* code;
     std::string t=ss.str();
     code =t.c_str();
+#ifndef VULKAN_API
     shaderObj=glCreateShader(type);
     glShaderSource(shaderObj,1,&code,NULL);
     glCompileShader(shaderObj);
@@ -120,6 +121,7 @@ Shader::Shader(GLenum type,char* shaderFilePath){
     printf(log);
     delete [] log;
     delete length;
+#endif
 }
 ShaderProgram::ShaderProgram(){
     obj=glCreateProgram();
@@ -142,23 +144,32 @@ void ShaderProgram::update(){
 }
 
 void ShaderProgram::attach(uint shader){
+#ifndef VULKAN_API
     glAttachShader(obj,shader);
+#endif
 }
 
 void ShaderProgram::attach(Shader& shader){
+#ifndef VULKAN_API
     glAttachShader(obj,shader.shaderObj);
+#endif
 }
 Shader::~Shader(){
+#ifndef VULKAN_API
     glDeleteShader(shaderObj);
+#endif
 }
 
 ShaderProgram::~ShaderProgram(){
+#ifndef VULKAN_API
     glDeleteProgram(obj);
+#endif
 }
 int ShaderProgram::getGLProgram(){
     return obj;
 }
 void model::draw(offset iOffset,float sscale){
+#ifndef VULKAN_API
     glBindVertexArray(VAO);
     glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowW()/sceneTransform::getwindowH(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
@@ -168,4 +179,5 @@ void model::draw(offset iOffset,float sscale){
     glm::mat4 mat=proj*trans*scale;
     glUniformMatrix4fv(glGetUniformLocation(prog.getGLProgram(),"matrix"),1,GL_FALSE,glm::value_ptr(mat));
     glDrawElements(GL_TRIANGLES,vFace.size()*3,GL_UNSIGNED_INT,0);
+#endif
 }
