@@ -143,13 +143,15 @@ void glfwErrorCallBack(int errorCode,const char* errorString){
 #else
 int main(){
     application app;
-    app.init();
     try {
+        app.init();
         app.loop();
     } catch (const std::exception& e) {
         spdlog::error(e.what());
+        spdlog::error("program crash");
         return EXIT_FAILURE;
     }
+    app.cleanup();
     return EXIT_SUCCESS;
 }
 #endif
