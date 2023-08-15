@@ -145,7 +145,7 @@ VkResult application::CreateDebugUtilsMessengerEXT(VkDebugUtilsMessengerCreateIn
 void application::DestroyDebugUtilsMessengerEXT(){
     auto func=(PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(iVKInstance,"vkDestroyDebugUtilsMessengerEXT");
     if(func != nullptr) return func(iVKInstance,debugMessenger,nullptr);
-    else throw std::runtime_error("can't find the address of vkDestoryDebugUtilsMessengerEXT");
+    else throw std::runtime_error("can't find the address of vkDestroyDebugUtilsMessengerEXT");
 }
 
 
@@ -162,14 +162,26 @@ void application::pickPhysicalDevice(){
         }
     }
     if(physicalDevice==nullptr) throw std::runtime_error("failed to find a suitable device");
-    
+
 }
 
 
 bool application::isDeviceSuitable(VkPhysicalDevice device){
-    VkPhysicalDeviceProperties deviceProp;
-    VkPhysicalDeviceFeatures deviceFeatures;
-    vkGetPhysicalDeviceProperties(device,&deviceProp);
-    vkGetPhysicalDeviceFeatures(device,&deviceFeatures);
-    return deviceProp.deviceType==deviceFeatures.geometryShader;    
+    return findQueueFamilies(device).graphicsFamily.has_value();
+}
+
+
+auto application::findQueueFamilies(VkPhysicalDevice device)->queueFamilyDevices{
+    queueFamilyDevices indices;
+    uint32_t queueFamilyCount=0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+    int i=0;
+    for(auto queueFamily:queueFamilies){
+        if(queueFamily.queueFlags&VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily=i;
+        if(indices.graphicsFamily.has_value()) break;
+        i++;
+    }
+    return indices;
 }

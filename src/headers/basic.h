@@ -1,5 +1,7 @@
 #include <GLFW/glfw3.h>
+#include <cstdint>
 #include <spdlog/spdlog.h>
+#include <optional>
 #include <vector>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
@@ -15,6 +17,10 @@ const bool enableValidationTool=false;
 #else
 const bool enableValidationTool=true;
 #endif
+    struct queueFamilyDevices{
+        std::optional<uint32_t> graphicsFamily;
+
+    };
     const std::vector<const char*> validationLayers{
         "VK_LAYER_KHRONOS_validation",
     };
@@ -34,7 +40,7 @@ const bool enableValidationTool=true;
     VkPhysicalDevice physicalDevice=VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT debugMessenger;
     bool isDeviceSuitable(VkPhysicalDevice device);
-
+    queueFamilyDevices findQueueFamilies(VkPhysicalDevice device);
     void preInit();
 #endif
     GLFWwindow* glfwWindow;
