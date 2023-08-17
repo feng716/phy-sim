@@ -27,6 +27,8 @@ const bool enableValidationTool=true;
     std::vector<const char*> getDebugExtension();
     void checkValidationLayers();
     void initVulkan();
+    VkDevice device;
+    VkQueue graphicsQueue;
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT severity,
         VkDebugUtilsMessageTypeFlagsEXT type,
@@ -42,6 +44,7 @@ const bool enableValidationTool=true;
     bool isDeviceSuitable(VkPhysicalDevice device);
     queueFamilyDevices findQueueFamilies(VkPhysicalDevice device);
     void preInit();
+    void createLogicalDevices();
 #endif
     GLFWwindow* glfwWindow;
 public:
