@@ -278,7 +278,7 @@ auto application::querySwapChainSupport(VkPhysicalDevice device)->swapChainSuppo
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
     uint32_t formatCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,nullptr);
-    if(!formatCount){
+    if(formatCount){
         details.formats.resize(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, 
             &formatCount,details.formats.data());
@@ -286,7 +286,7 @@ auto application::querySwapChainSupport(VkPhysicalDevice device)->swapChainSuppo
     
     uint32_t presentModesCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModesCount,nullptr);
-    if(!presentModesCount){
+    if(presentModesCount){
         details.presentModes.resize(presentModesCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, 
             &presentModesCount,details.presentModes.data());

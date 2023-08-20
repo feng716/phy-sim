@@ -37,7 +37,7 @@ const bool enableValidationTool=true;
         "VK_LAYER_KHRONOS_validation",
     };
     const std::vector<const char*> deviceExtensions{
-        "VK_KHR_SWAPCHAIN"
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
     std::vector<const char*> getDebugExtension();
