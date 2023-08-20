@@ -177,7 +177,11 @@ void application::pickPhysicalDevice(){
 bool application::isDeviceSuitable(VkPhysicalDevice device){
     queueFamilyIndices indices=findQueueFamilies(device);
     
-    return indices.isComplete()&&checkDeviceExtensionSupport(device);
+    bool swapChainAdequate=false;
+    swapChainSupportDetails detail=querySwapChainSupport(device);
+    swapChainAdequate=!detail.formats.empty()&&!detail.presentModes.empty();
+
+    return indices.isComplete()&&checkDeviceExtensionSupport(device)&&swapChainAdequate;
 }
 
 
@@ -266,4 +270,28 @@ VkSurfaceKHR waylandPlatform::createSurface(){
     
     if(vkCreateWaylandSurfaceKHR(*pInstance,&info,nullptr,&surface)!=VK_SUCCESS) throw std::runtime_error("can't create wayland surface");
     return surface;
+}
+
+
+auto application::querySwapChainSupport(VkPhysicalDevice device)->swapChainSupportDetails{
+    swapChainSupportDetails details;
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,nullptr);
+    if(!formatCount){
+        details.formats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, 
+            &formatCount,details.formats.data());
+    }
+    
+    uint32_t presentModesCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModesCount,nullptr);
+    if(!presentModesCount){
+        details.presentModes.resize(presentModesCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, 
+            &presentModesCount,details.presentModes.data());
+    }
+
+
+    return details;
 }

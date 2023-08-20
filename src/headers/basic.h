@@ -28,6 +28,11 @@ const bool enableValidationTool=true;
         std::optional<uint32_t> presentFamily;
         bool isComplete(){return graphicsFamily.has_value()&&presentFamily.has_value();}
     };
+    struct swapChainSupportDetails{
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
     const std::vector<const char*> validationLayers{
         "VK_LAYER_KHRONOS_validation",
     };
@@ -44,7 +49,7 @@ const bool enableValidationTool=true;
     VkSurfaceKHR surface;
     
     void setupVulkanSurface();
-    
+    swapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT severity,
         VkDebugUtilsMessageTypeFlagsEXT type,
@@ -65,7 +70,7 @@ const bool enableValidationTool=true;
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
     void preInit();
     void createLogicalDevices();
-#endif
+#endif/*VULKAN_API*/
     GLFWwindow* glfwWindow;
 public:
     void init();
