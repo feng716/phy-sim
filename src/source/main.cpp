@@ -106,12 +106,12 @@ MessageCallback( GLenum source,
                  const GLchar* message,
                  const void* userParam )
 {
-  //fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-           //( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-            //type, severity, message );
-  spdlog::error("GL CALLBACK:{},type={},severity=0x{},message={}\n",
-    ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),type,severity,message);
-    exit(0);
+  fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+  //spdlog::error("GL CALLBACK:{},type={},severity=0x{},message={}\n",
+    //( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),type,severity,message);
+    exit(-1);
 }
 
 
@@ -133,5 +133,5 @@ void mouseButtonCallBack(GLFWwindow* window,int button,int action,int mods){
     else glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 void glfwErrorCallBack(int errorCode,const char* errorString){
-    spdlog::error("GLFWError:{}", errorString);
+    //spdlog::error("GLFWError:{}", errorString);
 }
