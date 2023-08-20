@@ -2,7 +2,7 @@ add_rules("mode.debug","mode.release")
 add_rules("plugin.compile_commands.autoupdate",{outputdir="build"})
 target("main")
     set_kind("binary")
-    add_files("src/source/*.cpp","src/source/*.c|glad/glad.c")
+    add_files("src/source/*.cpp","src/source/*.c|glad.c")
     if is_mode("debug") then
         add_defines("DEBUG")
         add_cxflags("-g")

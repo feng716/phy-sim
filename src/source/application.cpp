@@ -1,5 +1,11 @@
 #include "basic.h"
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+#include <set>
+#include <string>
+#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan_wayland.h>
+
+#define GLFW_INCLUDE_VULKAN
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -10,7 +16,6 @@
 #include <stdexcept>
 #include <sys/types.h>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 #include "sceneTransform.h"
 void application::checkValidationLayers(){
     if(enableValidationTool){
@@ -30,10 +35,16 @@ void application::checkValidationLayers(){
 void application::preInit(){
     spdlog::info("preInit");
 #ifdef VULKAN_API 
+    glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    glfwInit();
 
+    glfwSetErrorCallback(glfwErrorCallback);
+    glfwWindow=glfwCreateWindow(sceneTransform::getwindowW(), sceneTransform::getwindowH(), 
+        "phy-sim", nullptr, nullptr);
+    
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForVulkan(glfwWindow,true);
     initVulkan();
 #endif
 }
@@ -63,20 +74,14 @@ void application::initVulkan(){
         throw std::runtime_error("failed to create vk instance");
     
     setupDebugCallback();
+    setupVulkanSurface();
     pickPhysicalDevice();
     createLogicalDevices();
-
+    
 }
 void application::init(){
     spdlog::info("init");
     preInit();
-#ifdef VULKAN_API
-    glfwWindow=glfwCreateWindow(sceneTransform::getwindowW(), sceneTransform::getwindowH(), 
-        "phy-sim", nullptr, nullptr);
-    
-    ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForVulkan(glfwWindow,true);
-#endif
 }
 
 void application::loop(){
@@ -88,6 +93,7 @@ void application::loop(){
 
 void application::cleanup(){
     vkDestroyDevice(device, nullptr);
+    vkDestroySurfaceKHR(iVKInstance, surface, nullptr);
     DestroyDebugUtilsMessengerEXT();
     vkDestroyInstance(iVKInstance, NULL);
     glfwDestroyWindow(glfwWindow);
@@ -169,43 +175,66 @@ void application::pickPhysicalDevice(){
 
 
 bool application::isDeviceSuitable(VkPhysicalDevice device){
-    return findQueueFamilies(device).graphicsFamily.has_value();
+    queueFamilyIndices indices=findQueueFamilies(device);
+    
+    return indices.isComplete()&&checkDeviceExtensionSupport(device);
 }
 
 
-auto application::findQueueFamilies(VkPhysicalDevice device)->queueFamilyDevices{
-    queueFamilyDevices indices;
+auto application::findQueueFamilies(VkPhysicalDevice device)->queueFamilyIndices{
+    queueFamilyIndices indices;
     uint32_t queueFamilyCount=0;
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
     int i=0;
+    VkBool32 presentSupport=false;
     for(auto queueFamily:queueFamilies){
         if(queueFamily.queueFlags&VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily=i;
-        if(indices.graphicsFamily.has_value()) break;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device,i,surface,&presentSupport);
+        if(presentSupport) indices.presentFamily=i;
+        if(indices.isComplete()) break;
         i++;
     }
+
     return indices;
 }
 
 
+bool application::checkDeviceExtensionSupport(VkPhysicalDevice device){
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr,&extensionCount,availableExtensions.data());
+    std::set<std::string> requiredExtension(deviceExtensions.begin(),deviceExtensions.end());
+    for(auto extension:availableExtensions) requiredExtension.erase(extension.extensionName);
+    return true;
+}
 void application::createLogicalDevices(){
-    queueFamilyDevices indices=findQueueFamilies(physicalDevice);
+    queueFamilyIndices indices=findQueueFamilies(physicalDevice);
 
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType=VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex=indices.graphicsFamily.value();
-    queueCreateInfo.queueCount=1;
-    float queuePriority = 1.f;
-    queueCreateInfo.pQueuePriorities=&queuePriority;
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+    std::set<uint32_t> uniqueQueueFamilies={indices.graphicsFamily.value(),indices.presentFamily.value()};
+
+    for(auto queueFamily:uniqueQueueFamilies){
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType=VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex=queueFamily;
+        queueCreateInfo.queueCount=1;
+        float queuePriority = 1.f;
+        queueCreateInfo.pQueuePriorities=&queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
     VkPhysicalDeviceFeatures devicesFeatures{};
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType=VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos=&queueCreateInfo;
-    createInfo.queueCreateInfoCount=1;
+    createInfo.pQueueCreateInfos=queueCreateInfos.data();
+    createInfo.queueCreateInfoCount=queueCreateInfos.size();
     createInfo.pEnabledFeatures=&devicesFeatures;
-    createInfo.enabledExtensionCount=0;
+    createInfo.enabledExtensionCount=deviceExtensions.size();
+    createInfo.ppEnabledExtensionNames=deviceExtensions.data();
     if(enableValidationTool){
         createInfo.enabledLayerCount=validationLayers.size();
         createInfo.ppEnabledLayerNames=validationLayers.data();
@@ -213,4 +242,28 @@ void application::createLogicalDevices(){
     //the queue was created along with logical device
     if(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device)!=VK_SUCCESS) throw std::runtime_error("can't create logical device");
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+}
+
+void application::setupVulkanSurface(){
+    auto surfaceCreator=new waylandPlatform(glfwWindow,&iVKInstance);
+    surface=surfaceCreator->createSurface();
+    if(glfwCreateWindowSurface(iVKInstance,glfwWindow,nullptr,&surface)!=VK_SUCCESS) throw std::runtime_error("failed to create vulkan surface");
+}
+
+waylandPlatform::waylandPlatform(GLFWwindow* windowInit,VkInstance* iInstance){
+    window=windowInit;
+    pInstance=iInstance;
+}
+
+VkSurfaceKHR waylandPlatform::createSurface(){
+    VkSurfaceKHR surface;
+    //auto fpCreateWaylandSurfaceKHR=(PFN_vkCreateWaylandSurfaceKHR)vkGetInstanceProcAddr(*pInstance, "vkCreateWaylandSurfaceKHR");
+    //if(!fpCreateWaylandSurfaceKHR) throw std::runtime_error("can't get function address(wayland surface)");
+    VkWaylandSurfaceCreateInfoKHR info{VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR};
+    info.display=glfwGetWaylandDisplay();
+    info.surface=glfwGetWaylandWindow(window);
+    
+    if(vkCreateWaylandSurfaceKHR(*pInstance,&info,nullptr,&surface)!=VK_SUCCESS) throw std::runtime_error("can't create wayland surface");
+    return surface;
 }

@@ -67,7 +67,7 @@ model::model(char* filePath):
     }//thanks,learnopengl!
 
     setupMesh(0, *scene);
-
+#ifndef VULKAN_API
     glCreateBuffers(1,&vertex_buffer);
     glCreateBuffers(1,&indices_buffer);
     glNamedBufferStorage(vertex_buffer,scene->mMeshes[0]->mNumVertices*sizeof(Vertex),
@@ -82,7 +82,6 @@ model::model(char* filePath):
     glVertexAttribPointer(0,3,GL_FLOAT,false,sizeof(glm::vec2)+2*sizeof(glm::vec3),0);
     glVertexAttribPointer(1,3,GL_FLOAT,false,sizeof(glm::vec2)+2*sizeof(glm::vec3),(void*)sizeof(glm::vec3));
     glVertexAttribPointer(2,2,GL_FLOAT,false,2*sizeof(glm::vec3)+sizeof(glm::vec2),(void*)(2*sizeof(glm::vec3)));
-
     /*
     layout 0 vec3 postion
     layout 1 vec3 normal
@@ -91,7 +90,7 @@ model::model(char* filePath):
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    
+#endif
     prog.attach(vert);
     prog.attach(frag);
     prog.update();
@@ -124,10 +123,14 @@ Shader::Shader(GLenum type,char* shaderFilePath){
 #endif
 }
 ShaderProgram::ShaderProgram(){
+#ifndef VULKAN_API
+
     obj=glCreateProgram();
+#endif
 }
 
 void ShaderProgram::update(){
+#ifndef VULKAN_API
     glLinkProgram(obj);
     int success;
     glGetProgramiv(obj,GL_LINK_STATUS,&success);
@@ -141,6 +144,7 @@ void ShaderProgram::update(){
         delete length;
     }
     glUseProgram(obj);
+#endif
 }
 
 void ShaderProgram::attach(uint shader){
