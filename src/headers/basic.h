@@ -68,6 +68,11 @@ const bool enableValidationTool=true;
     bool isDeviceSuitable(VkPhysicalDevice device);
     queueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+    void createSwapChain();
+    VkSwapchainKHR swapChain;
     void preInit();
     void createLogicalDevices();
 #endif/*VULKAN_API*/
