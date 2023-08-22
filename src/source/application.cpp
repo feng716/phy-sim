@@ -2,7 +2,10 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <algorithm>
+#include <fstream>
+#include <ios>
 #include <limits>
+#include <memory>
 #include <set>
 #include <string>
 #include <vulkan/vulkan_core.h>
@@ -81,6 +84,8 @@ void application::initVulkan(){
     pickPhysicalDevice();
     createLogicalDevices();
     createSwapChain();
+    createImageViews();
+    
 }
 void application::init(){
     spdlog::info("init");
@@ -98,6 +103,7 @@ void application::cleanup(){
     vkDestroyDevice(device, nullptr);
     vkDestroySurfaceKHR(iVKInstance, surface, nullptr);
     vkDestroySwapchainKHR(device, swapChain, nullptr);
+    for (auto imageView:swapChainImageViews) vkDestroyImageView(device, imageView, nullptr);
     DestroyDebugUtilsMessengerEXT();
     vkDestroyInstance(iVKInstance, NULL);
     glfwDestroyWindow(glfwWindow);
@@ -265,6 +271,7 @@ waylandPlatform::waylandPlatform(GLFWwindow* windowInit,VkInstance* iInstance){
 }
 
 VkSurfaceKHR waylandPlatform::createSurface(){
+
     VkSurfaceKHR surface;
     //auto fpCreateWaylandSurfaceKHR=(PFN_vkCreateWaylandSurfaceKHR)vkGetInstanceProcAddr(*pInstance, "vkCreateWaylandSurfaceKHR");
     //if(!fpCreateWaylandSurfaceKHR) throw std::runtime_error("can't get function address(wayland surface)");
@@ -361,5 +368,102 @@ void application::createSwapChain(){
     if(vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain)!=VK_SUCCESS) throw std::runtime_error("failed to create swapchain");
     spdlog::info("create swapchain");
 
+    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+    swapChainImageFormat=surfaceFormat.format;
+    swapChainExtent=extent;
 
+
+}
+void application::createImageViews(){
+    swapChainImageViews.resize(swapChainImages.size());
+    for(unsigned int t=0;t<swapChainImageViews.size();t++){
+        VkImageViewCreateInfo createInfo{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+        createInfo.image=swapChainImages[t];
+        createInfo.viewType=VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format=swapChainImageFormat;
+        createInfo.components.r=VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g=VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b=VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a=VK_COMPONENT_SWIZZLE_IDENTITY;
+        
+        createInfo.subresourceRange.aspectMask=VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel=0;
+        createInfo.subresourceRange.baseArrayLayer=0;
+        createInfo.subresourceRange.levelCount=1;
+        createInfo.subresourceRange.layerCount=1;
+        if(!vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[t])!=VK_SUCCESS) throw std::runtime_error("failed to create image views");
+
+    }
+}
+
+void application::createGraphicsPipeline(){
+    auto vertexShaderBinary=loadShaders("3dmodels/vulkanShader/vertex.spv");
+    auto fragShaderBinary=loadShaders("3dmodels/vulkanShader/frag.spv");
+
+    VkShaderModule vertModule=createShaderModule(vertexShaderBinary);
+    VkShaderModule fragModule=createShaderModule(fragShaderBinary);
+
+    VkPipelineShaderStageCreateInfo vertexShaderStageCreateInfo;
+    vertexShaderStageCreateInfo.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertexShaderStageCreateInfo.stage=VK_SHADER_STAGE_VERTEX_BIT;
+    vertexShaderStageCreateInfo.module=vertModule;
+    vertexShaderStageCreateInfo.pName="main";
+
+    VkPipelineShaderStageCreateInfo fragShaderStageCreateInfo;
+    fragShaderStageCreateInfo.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageCreateInfo.stage=VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderStageCreateInfo.module=fragModule;
+    fragShaderStageCreateInfo.pName="main";
+
+    VkPipelineShaderStageCreateInfo shaderStages[]={vertexShaderStageCreateInfo,fragShaderStageCreateInfo};
+
+    std::vector<VkDynamicState> dynamicState={VK_DYNAMIC_STATE_VIEWPORT,VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
+    dynamicStateCreateInfo.sType=VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicStateCreateInfo.dynamicStateCount=dynamicState.size();
+    dynamicStateCreateInfo.pDynamicStates=dynamicState.data();
+
+    VkPipelineVertexInputStateCreateInfo vertexInput{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+    vertexInput.vertexAttributeDescriptionCount=0;
+    vertexInput.vertexBindingDescriptionCount=0;
+
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+    inputAssembly.topology=VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.primitiveRestartEnable=VK_FALSE;
+
+    VkViewport viewport{};
+    viewport.x=.0f;
+    viewport.y=.0f;
+    viewport.width=(float) swapChainExtent.width;
+    viewport.height=(float) swapChainExtent.height;
+    viewport.maxDepth=1;
+    viewport.minDepth=0;
+
+    VkRect2D scissor{};
+    scissor.offset={0,0};
+    scissor.extent=swapChainExtent;
+
+    
+}
+
+
+std::vector<char> application::loadShaders(const std::string& fileName){
+    std::ifstream file(fileName,std::ios::ate|std::ios::binary);
+    if(!file.is_open()){ spdlog::error("can't open shader binary:{}",fileName);throw std::runtime_error("can't open file");}
+    size_t fileSize=file.tellg();
+    std::vector<char> buffer(fileSize);
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+    return buffer;
+}
+
+
+VkShaderModule application::createShaderModule(const std::vector<char>& code){
+    VkShaderModuleCreateInfo createInfo{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+    createInfo.codeSize=code.size();
+    createInfo.pCode=reinterpret_cast<const uint32_t*>(code.data());
+    VkShaderModule module;
+    if(vkCreateShaderModule(device, &createInfo, nullptr, &module)!=VK_SUCCESS) throw std::runtime_error("can't create shader module");
+    return module;
 }

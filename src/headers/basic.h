@@ -1,3 +1,4 @@
+#include <memory>
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WAYLAND
@@ -42,6 +43,9 @@ const bool enableValidationTool=true;
 
     std::vector<const char*> getDebugExtension();
     void checkValidationLayers();
+    void createGraphicsPipeline();
+    std::vector<char> loadShaders(const std::string& fileName);
+    VkShaderModule createShaderModule(const std::vector<char>&);
     void initVulkan();
     VkDevice device;
     VkQueue graphicsQueue;
@@ -50,6 +54,13 @@ const bool enableValidationTool=true;
     
     void setupVulkanSurface();
     swapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkImage> swapChainImages;
+
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
+    void createImageViews();
+
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT severity,
         VkDebugUtilsMessageTypeFlagsEXT type,
@@ -57,7 +68,7 @@ const bool enableValidationTool=true;
         void* pUserData
     );
     static void glfwErrorCallback(int error,const char* dscrp){
-        spdlog::error("error{}:{}",error,dscrp);
+        spdlog::error("glfw:error:{}:{}",error,dscrp);
     }
     void setupDebugCallback();
     VkResult CreateDebugUtilsMessengerEXT(VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo);
