@@ -23,7 +23,7 @@
  * @brief a test
  * 
  */
-void init(std::vector<model*>&);
+void init(std::vector<indexModel*>&);
 
 float sceneTransform::windowW=500,sceneTransform::windowH=600;
 float sceneTransform::cursorXPos=0,sceneTransform::cursorYPos=0;
@@ -65,8 +65,8 @@ int main(){
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
     //list of models
-    std::vector<model*> vModels;
-    init(vModels);
+    std::vector<indexModel*> vindexModels;
+    init(vindexModels);
     while(!glfwWindowShouldClose(window)){
         static float scale=0.1;
         static offset ofst;
@@ -82,7 +82,7 @@ int main(){
         ImGui::End();
 
         glClear(GL_COLOR_BUFFER_BIT);
-        for (auto i : vModels) i->draw(ofst,scale);
+        for (auto i : vindexModels) i->draw(ofst,scale);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -92,9 +92,9 @@ int main(){
     glfwTerminate();
     return 0;
 }
-void init(std::vector<model*>& vM){
+void init(std::vector<indexModel*>& vM){
     system("pwd");
-    vM.push_back(new model("3dmodels/cube.fbx"));
+    vM.push_back(new indexModel("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0));
     
 }
 void GLAPIENTRY

@@ -18,6 +18,7 @@
 #include <glm/trigonometric.hpp>
 #include <iostream>
 #include <linux/limits.h>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <sys/types.h>
 #include "sceneTransform.h"
@@ -33,8 +34,8 @@ glm::vec2 convertAiToGlm2D(const aiVector3D aivec){
 }
 
 
-void model::setupMesh(int index,const aiScene& scene){
-    aiMesh* mesh=scene.mMeshes[index];
+void indexModel::setupMesh(){
+    aiMesh* mesh=scene->mMeshes[meshIndex];
     for(uint i=0;i<mesh->mNumVertices;i++){
         Vertex iVertex;
         iVertex.position=convertAiToGlm(mesh->mVertices[i]);
@@ -51,22 +52,13 @@ void model::setupMesh(int index,const aiScene& scene){
     }
 }
 
-model::model(char* filePath):
-    vert(GL_VERTEX_SHADER,"3dmodels/cube.vert"),
-    frag(GL_FRAGMENT_SHADER,"3dmodels/cube.frag"){
-    Assimp::DefaultLogger::create("",Assimp::Logger::VERBOSE);
-    Assimp::DefaultLogger::get()->info("begin load modes");
-    Assimp::DefaultLogger::get()->attachStream(new stdAssimpLogStream, Assimp::Logger::Err);
+indexModel::indexModel(char* modelFilePath,char* vertPath,char* fragPath,int iMeshIndex):
+    model(modelFilePath,vertPath,fragPath),
+    meshIndex(iMeshIndex)
+{
     
-    Assimp::Importer impter;
-    const aiScene *scene=impter.ReadFile(filePath,
-        aiProcess_Triangulate | aiProcess_GenNormals );
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
-        Assimp::DefaultLogger::get()->error("assimp import failed");
-        return;
-    }//thanks,learnopengl!
-
-    setupMesh(0, *scene);
+    
+    setupMesh();
 
     glCreateBuffers(1,&vertex_buffer);
     glCreateBuffers(1,&indices_buffer);
@@ -97,8 +89,7 @@ model::model(char* filePath):
     prog.update();
 }
 
-model::~model(){
-    Assimp::DefaultLogger::kill();
+indexModel::~indexModel(){
 
 }
 
@@ -158,7 +149,7 @@ ShaderProgram::~ShaderProgram(){
 int ShaderProgram::getGLProgram(){
     return obj;
 }
-void model::draw(offset iOffset,float sscale){
+void indexModel::draw(offset iOffset,float sscale){
     glBindVertexArray(VAO);
     glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowW()/sceneTransform::getwindowH(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
@@ -168,4 +159,18 @@ void model::draw(offset iOffset,float sscale){
     glm::mat4 mat=proj*trans*scale;
     glUniformMatrix4fv(glGetUniformLocation(prog.getGLProgram(),"matrix"),1,GL_FALSE,glm::value_ptr(mat));
     glDrawElements(GL_TRIANGLES,vFace.size()*3,GL_UNSIGNED_INT,0);
+}
+
+model::model(char* modelFilePath,char* vertPath,char* fragPath):
+    vert(GL_VERTEX_SHADER,vertPath),
+    frag(GL_FRAGMENT_SHADER,fragPath)
+{
+
+    Assimp::Importer impter;
+    impter.ReadFile(modelFilePath,
+        aiProcess_Triangulate | aiProcess_GenNormals );
+    scene=impter.GetOrphanedScene();
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
+        spdlog::error("failed to load model{}", modelFilePath);
+    }
 }

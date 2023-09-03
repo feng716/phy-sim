@@ -33,27 +33,35 @@ public:
         printf("%s\n",message);
     }
 };
-
 struct Vertex{
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 uv;
 };
-
 class model{
-private:
+protected:
     unsigned int VAO;
     unsigned int vertex_buffer;
-    unsigned int indices_buffer;
     std::vector<Vertex> vVertex;
-    std::vector<uint3> vFace;
+    virtual void setupMesh()=0;
+    const aiScene *scene;
     Shader vert;
     ShaderProgram prog;
     Shader frag;
-    void setupMesh(int,const aiScene&);
+public:
+    virtual void draw(offset,float)=0;
+    model(char* modelFilePath,char* vertPath,char* fragPath);
+};
+
+class indexModel:public model{
+private:
+    std::vector<uint3> vFace;
+    unsigned int indices_buffer;
+    int meshIndex;
+    virtual void setupMesh() override;
     
 public:
-    void draw(offset,float);
-    model(char* filePath);
-    ~model();
+    void draw(offset,float) override;
+    ~indexModel();
+    indexModel(char* modelFilePath,char* vertPath,char* fragPath,int);
 };
