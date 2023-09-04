@@ -1,4 +1,5 @@
 #include "glad/glad.h"
+#pragma once
 class Shader;
 class ShaderProgram{
 private:

@@ -1,9 +1,12 @@
+#include "fluid.h"
 #include "glad/glad.h"
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <fcntl.h>
+#include <glm/ext/vector_float3.hpp>
 #include <iostream>
-//gflw
+//glfw
 #include <GLFW/glfw3.h>
 
 #include <assimp/scene.h>
@@ -14,6 +17,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui.h>
+#include <strings.h>
 #include <vector>
 
 #include <spdlog/spdlog.h>
@@ -23,9 +27,28 @@
  * @brief a test
  * 
  */
-void init(std::vector<indexModel*>&);
+void init();
 
 float sceneTransform::windowW=500,sceneTransform::windowH=600;
+float spriteRenderer::spriteVertices[24]={
+    0.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f, 
+
+    0.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 0.0f
+};
+float fluid::spriteVertices[24]={
+    0.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f, 
+
+    0.0f, 1.0f, 0.0f, 1.0f,
+    1.0f, 1.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 1.0f, 0.0f
+};
+
 float sceneTransform::cursorXPos=0,sceneTransform::cursorYPos=0;
 void GLAPIENTRY
 MessageCallback( GLenum source,
@@ -64,9 +87,7 @@ int main(){
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
-    //list of models
-    std::vector<indexModel*> vindexModels;
-    init(vindexModels);
+    indexModel cube("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
     while(!glfwWindowShouldClose(window)){
         static float scale=0.1;
         static offset ofst;
@@ -78,11 +99,13 @@ int main(){
 
         ImGui::SliderFloat("Z Axis", &ofst.z, 0,100);
         ImGui::SliderFloat("Scale", &scale,0.1,1);
-
         ImGui::End();
-
+        transform temp_tr;
+        temp_tr.setPosition(glm::vec3(ofst.x,ofst.y,-ofst.z));
+        temp_tr.setScale(glm::vec3(scale));
+        cube.setTransform(temp_tr);
         glClear(GL_COLOR_BUFFER_BIT);
-        for (auto i : vindexModels) i->draw(ofst,scale);
+        model::renderAllModels();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -91,11 +114,6 @@ int main(){
     }
     glfwTerminate();
     return 0;
-}
-void init(std::vector<indexModel*>& vM){
-    system("pwd");
-    vM.push_back(new indexModel("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0));
-    
 }
 void GLAPIENTRY
 MessageCallback( GLenum source,

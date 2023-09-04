@@ -8,6 +8,7 @@
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/vector3.h>
 #include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
@@ -23,6 +24,7 @@
 #include <sys/types.h>
 #include "sceneTransform.h"
 
+std::list<model*> model::modelList;
 glm::vec3 convertAiToGlm(const aiVector3D aivec){
     glm::vec3 temp(aivec.x,aivec.y,aivec.z);
     return temp;
@@ -35,6 +37,13 @@ glm::vec2 convertAiToGlm2D(const aiVector3D aivec){
 
 
 void indexModel::setupMesh(){
+    Assimp::Importer impter;
+    impter.ReadFile(modelFilePath,
+        aiProcess_Triangulate | aiProcess_GenNormals );
+    scene=impter.GetOrphanedScene();
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
+        spdlog::error("failed to load model{}", modelFilePath);
+    }
     aiMesh* mesh=scene->mMeshes[meshIndex];
     for(uint i=0;i<mesh->mNumVertices;i++){
         Vertex iVertex;
@@ -52,12 +61,12 @@ void indexModel::setupMesh(){
     }
 }
 
-indexModel::indexModel(char* modelFilePath,char* vertPath,char* fragPath,int iMeshIndex):
-    model(modelFilePath,vertPath,fragPath),
+indexModel::indexModel(char* iModelFilePath,char* vertPath,char* fragPath,int iMeshIndex):
+    model(vertPath,fragPath),
     meshIndex(iMeshIndex)
 {
-    
-    
+    modelFilePath=new char[strlen(iModelFilePath)];
+    strcpy(modelFilePath, iModelFilePath);
     setupMesh();
 
     glCreateBuffers(1,&vertex_buffer);
@@ -90,7 +99,7 @@ indexModel::indexModel(char* modelFilePath,char* vertPath,char* fragPath,int iMe
 }
 
 indexModel::~indexModel(){
-
+    delete modelFilePath;
 }
 
 Shader::Shader(GLenum type,char* shaderFilePath){
@@ -149,28 +158,38 @@ ShaderProgram::~ShaderProgram(){
 int ShaderProgram::getGLProgram(){
     return obj;
 }
-void indexModel::draw(offset iOffset,float sscale){
+void indexModel::draw(){
     glBindVertexArray(VAO);
     glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowW()/sceneTransform::getwindowH(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
-    glm::mat4 trans=glm::translate(modeltrans,glm::vec3(iOffset.x,0,-iOffset.z));
+    glm::mat4 trans=glm::translate(modeltrans,tr.getPosition());
     
-    glm::mat4 scale=glm::scale(glm::mat4(1.), glm::vec3(sscale));
+    glm::mat4 scale=glm::scale(glm::mat4(1.), glm::vec3(tr.getScale()));
     glm::mat4 mat=proj*trans*scale;
     glUniformMatrix4fv(glGetUniformLocation(prog.getGLProgram(),"matrix"),1,GL_FALSE,glm::value_ptr(mat));
     glDrawElements(GL_TRIANGLES,vFace.size()*3,GL_UNSIGNED_INT,0);
 }
 
-model::model(char* modelFilePath,char* vertPath,char* fragPath):
+model::model(char* vertPath,char* fragPath):
     vert(GL_VERTEX_SHADER,vertPath),
     frag(GL_FRAGMENT_SHADER,fragPath)
 {
+    setupMesh();
+    modelList.push_back(this);
+    modelListIndex=modelList.end();
+}
 
-    Assimp::Importer impter;
-    impter.ReadFile(modelFilePath,
-        aiProcess_Triangulate | aiProcess_GenNormals );
-    scene=impter.GetOrphanedScene();
-    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
-        spdlog::error("failed to load model{}", modelFilePath);
-    }
+void model::setupMesh(){
+    
+}
+
+void model::setTransform(transform& itr){
+    tr=itr;
+}
+void model::renderAllModels(){
+    for(auto m:modelList) m->draw();
+}
+
+model::~model(){
+    modelList.erase(modelListIndex);
 }

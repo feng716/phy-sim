@@ -1,15 +1,19 @@
+#pragma once
 #include <assimp/LogStream.hpp>
 #include <assimp/scene.h>
 #include <assimp/vector3.h>
 #include <cstdio>
 #include <glm/detail/qualifier.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/quaternion_float.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
 #include "shader.h"
+#include "basic.h"
 #include <imgui.h>
+#include <list>
 #include <vector>
 struct uint3{
     unsigned int x;
@@ -40,17 +44,23 @@ struct Vertex{
 };
 class model{
 protected:
-    unsigned int VAO;
+    static std::list<model*> modelList;
+    std::list<model*>::iterator modelListIndex;
     unsigned int vertex_buffer;
+    transform tr;
+    virtual ~model();
+    unsigned int VAO;
     std::vector<Vertex> vVertex;
-    virtual void setupMesh()=0;
+    virtual void setupMesh();
     const aiScene *scene;
     Shader vert;
     ShaderProgram prog;
     Shader frag;
 public:
-    virtual void draw(offset,float)=0;
-    model(char* modelFilePath,char* vertPath,char* fragPath);
+    static void renderAllModels();
+    virtual void draw()=0;
+    void setTransform(transform& itr);
+    model(char* vertPath,char* fragPath);
 };
 
 class indexModel:public model{
@@ -59,9 +69,14 @@ private:
     unsigned int indices_buffer;
     int meshIndex;
     virtual void setupMesh() override;
+    char* modelFilePath;
     
 public:
-    void draw(offset,float) override;
+    void draw() override;
     ~indexModel();
     indexModel(char* modelFilePath,char* vertPath,char* fragPath,int);
+};
+class camera{
+private:
+    transform tr;
 };
