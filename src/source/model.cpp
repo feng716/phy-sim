@@ -100,6 +100,7 @@ indexModel::indexModel(char* iModelFilePath,char* vertPath,char* fragPath,int iM
 
 indexModel::~indexModel(){
     delete modelFilePath;
+    delete scene;
 }
 
 Shader::Shader(GLenum type,char* shaderFilePath){
@@ -163,11 +164,11 @@ void indexModel::draw(){
     glm::mat4 proj=glm::perspective(glm::radians(45.f),sceneTransform::getwindowW()/sceneTransform::getwindowH(),0.1f,150.f);
     glm::mat4 modeltrans(1.0f);
     glm::mat4 trans=glm::translate(modeltrans,tr.getPosition());
-    
-    glm::mat4 scale=glm::scale(glm::mat4(1.), glm::vec3(tr.getScale()));
-    glm::mat4 mat=proj*trans*scale;
+    glm::mat4 view=glm::translate(trans, sceneTransform::getLookAt());
+    glm::mat4 scale=glm::scale(view, glm::vec3(tr.getScale()));
+    glm::mat4 mat=proj*scale;
     glUniformMatrix4fv(glGetUniformLocation(prog.getGLProgram(),"matrix"),1,GL_FALSE,glm::value_ptr(mat));
-    glDrawElements(GL_TRIANGLES,vFace.size()*3,GL_UNSIGNED_INT,0);
+    glDrawElements(GL_TRIANGLES,vFace.size()*3,GL_UNSIGNED_INT,0);;
 }
 
 model::model(char* vertPath,char* fragPath):
@@ -177,6 +178,7 @@ model::model(char* vertPath,char* fragPath):
     setupMesh();
     modelList.push_back(this);
     modelListIndex=modelList.end();
+    tr.setScale(glm::vec3(1));
 }
 
 void model::setupMesh(){
@@ -186,6 +188,13 @@ void model::setupMesh(){
 void model::setTransform(transform& itr){
     tr=itr;
 }
+
+void model::setPosition(glm::vec3 iPos){
+    spdlog::info("model:{},{},{}",iPos.x,iPos.y,iPos.z);
+    tr.setPosition(iPos);
+}
+
+
 void model::renderAllModels(){
     for(auto m:modelList) m->draw();
 }

@@ -48,7 +48,7 @@ protected:
     std::list<model*>::iterator modelListIndex;
     unsigned int vertex_buffer;
     transform tr;
-    virtual ~model();
+    transform modelTr;
     unsigned int VAO;
     std::vector<Vertex> vVertex;
     virtual void setupMesh();
@@ -57,9 +57,12 @@ protected:
     ShaderProgram prog;
     Shader frag;
 public:
+    virtual ~model();
     static void renderAllModels();
     virtual void draw()=0;
     void setTransform(transform& itr);
+    void setPosition(glm::vec3);
+    void setScale(const glm::vec3& ss){tr.setScale(ss);}
     model(char* vertPath,char* fragPath);
 };
 
@@ -68,14 +71,15 @@ private:
     std::vector<uint3> vFace;
     unsigned int indices_buffer;
     int meshIndex;
-    virtual void setupMesh() override;
     char* modelFilePath;
     
 public:
+    virtual void setupMesh() override;
     void draw() override;
     ~indexModel();
     indexModel(char* modelFilePath,char* vertPath,char* fragPath,int);
 };
+
 class camera{
 private:
     transform tr;

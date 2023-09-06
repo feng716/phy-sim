@@ -29,7 +29,6 @@
  */
 void init();
 
-float sceneTransform::windowW=500,sceneTransform::windowH=600;
 float spriteRenderer::spriteVertices[24]={
     0.0f, 1.0f, 0.0f, 1.0f,
     1.0f, 0.0f, 1.0f, 0.0f,
@@ -83,11 +82,12 @@ int main(){
     //gl error callback
     glEnable( GL_DEBUG_OUTPUT );
     glDebugMessageCallback( MessageCallback, 0 );
-
+    float length,height,width;
+    meshFluid fl(3,3,3,10);
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
-    indexModel cube("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+    //indexModel cube("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
     while(!glfwWindowShouldClose(window)){
         static float scale=0.1;
         static offset ofst;
@@ -95,15 +95,20 @@ int main(){
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
         ImGui::Begin("Settings");
-        ImGui::SliderFloat("X Axis", &ofst.x, -1,1);
+        ImGui::SliderFloat("X Axis", &ofst.x, -10,10);
 
         ImGui::SliderFloat("Z Axis", &ofst.z, 0,100);
-        ImGui::SliderFloat("Scale", &scale,0.1,1);
+        ImGui::SliderFloat("Scale", &scale,0.1,10);
         ImGui::End();
         transform temp_tr;
-        temp_tr.setPosition(glm::vec3(ofst.x,ofst.y,-ofst.z));
+        
+        //temp_tr.setPosition(glm::vec3(ofst.x,ofst.y,-ofst.z));
         temp_tr.setScale(glm::vec3(scale));
-        cube.setTransform(temp_tr);
+
+        sceneTransform::change_LookAt(glm::vec3(ofst.x,ofst.y,-ofst.z));
+        //cube.setTransform(temp_tr);
+        fl.setAllParticlesScale(temp_tr);
+        
         glClear(GL_COLOR_BUFFER_BIT);
         model::renderAllModels();
         ImGui::Render();

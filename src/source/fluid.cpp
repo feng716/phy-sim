@@ -27,16 +27,42 @@ void fluid::setupMesh(){
             for(int k=0;k<numParticleHeight;k++){
                 Vertex v;
                 v.position=glm::vec3((i-1)*interval,(j-1)*interval,(k-1)*interval);
-                vVertex.push_back(v);
+                vVertex.push_back(v);//use vertex as point to indicate the position of thr particles
             }
         }
     }
 }
 
 void fluid::draw(){
-
+    
 }
 spriteRenderer::spriteRenderer(){
     
+    
+}
+meshFluid::meshFluid(int l,int w,int h,float interval){
+    numParticleHeight=h;
+    numParticleLength=l;
+    numParticleWidth=w;
+    for(int i=0;i<numParticleLength;i++){
+        for(int j=0;j<numParticleHeight;j++){
+            for(int k=0;k<numParticleHeight;k++){
+                model* iModel=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+                iModel->setPosition(glm::vec3(i*interval,j*interval,k*interval));
+                particle.push_back(iModel);
+            }
+        }
+    }
+}
+
+meshFluid::~meshFluid(){
+    for(auto i:particle) delete i;
+}
+
+void meshFluid::setAllParticlesScale(transform& iTr){
+    for(auto i:particle) i->setScale(iTr.getScale());
+}
+
+void meshFluid::update(){
     
 }

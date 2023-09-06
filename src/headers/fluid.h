@@ -22,3 +22,16 @@ public:
     void draw() override;
     fluid(char*,char*,int l,int w,int h,float);
 };
+
+class meshFluid{
+private:
+    int numParticleLength;
+    int numParticleWidth;
+    int numParticleHeight;
+    std::vector<model*> particle;
+public:
+    ~meshFluid();
+    void setAllParticlesScale(transform& iTr);
+    void update();
+    meshFluid(int l,int w,int h,float);
+};
