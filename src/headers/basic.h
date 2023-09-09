@@ -7,7 +7,9 @@
         void set##name(type input){ name=input;}\
     private:
 class transform{
+
 private:
+    friend class model;
     DECLARE_COMPONENT(glm::vec3, Position)
     DECLARE_COMPONENT(glm::quat, Rotation)
     DECLARE_COMPONENT(glm::vec3, Scale)

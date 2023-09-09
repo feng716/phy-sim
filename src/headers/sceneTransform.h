@@ -7,6 +7,7 @@
         private:
 class sceneTransform{
 private:
+    static float STATIC_REGISTER_NAME(Timestep);
     static glm::mat4 STATIC_REGISTER_NAME(perspectiveMat)
     static glm::vec3 STATIC_REGISTER_NAME(LookAt);
     static float STATIC_REGISTER_NAME(cursorXPos)

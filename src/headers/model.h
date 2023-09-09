@@ -15,6 +15,9 @@
 #include <imgui.h>
 #include <list>
 #include <vector>
+#define DEFINE_GET_AND_SET(name) decltype(tr.name) get##name(){return tr.get##name();}\
+        void set##name(decltype(tr.name) input){tr.set##name(input);}\
+        void add##name(decltype(tr.name) input){set##name(get##name()+=input);}
 struct uint3{
     unsigned int x;
     unsigned int y;
@@ -61,8 +64,8 @@ public:
     static void renderAllModels();
     virtual void draw()=0;
     void setTransform(transform& itr);
-    void setPosition(glm::vec3);
-    void setScale(const glm::vec3& ss){tr.setScale(ss);}
+    DEFINE_GET_AND_SET(Scale)
+    DEFINE_GET_AND_SET(Position)
     model(char* vertPath,char* fragPath);
 };
 

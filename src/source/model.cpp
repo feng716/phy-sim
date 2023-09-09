@@ -177,7 +177,7 @@ model::model(char* vertPath,char* fragPath):
 {
     setupMesh();
     modelList.push_back(this);
-    modelListIndex=modelList.end();
+    modelListIndex=--modelList.end();
     tr.setScale(glm::vec3(1));
 }
 
@@ -187,11 +187,6 @@ void model::setupMesh(){
 
 void model::setTransform(transform& itr){
     tr=itr;
-}
-
-void model::setPosition(glm::vec3 iPos){
-    spdlog::info("model:{},{},{}",iPos.x,iPos.y,iPos.z);
-    tr.setPosition(iPos);
 }
 
 

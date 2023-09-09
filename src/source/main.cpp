@@ -83,32 +83,51 @@ int main(){
     glEnable( GL_DEBUG_OUTPUT );
     glDebugMessageCallback( MessageCallback, 0 );
     float length,height,width;
+
     meshFluid fl(3,3,3,10);
+
     ImGui::CreateContext();
+    ImGuiIO& io=ImGui::GetIO();
+    ImFontConfig fontcfg;
+    fontcfg.OversampleH=3;
+    io.Fonts->AddFontFromFileTTF("/usr/share/fonts/TTF/FiraCode-Retina.ttf",14,&fontcfg);
+
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
     //indexModel cube("3dmodels/cube.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+
+    static offset ofst;
+    ofst.z=50;
+    bool test=false;
     while(!glfwWindowShouldClose(window)){
-        static float scale=0.1;
-        static offset ofst;
+        static float scale=1;
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
         ImGui::Begin("Settings");
-        ImGui::SliderFloat("X Axis", &ofst.x, -10,10);
-
-        ImGui::SliderFloat("Z Axis", &ofst.z, 0,100);
-        ImGui::SliderFloat("Scale", &scale,0.1,10);
+        if(ImGui::CollapsingHeader("Configuration")){
+            if(ImGui::TreeNode("General Settings")){
+                ImGui::SliderFloat("X Axis", &ofst.x, -10,10);
+                ImGui::SliderFloat("Z Axis", &ofst.z, 50,120);
+                ImGui::SliderFloat("Y Axis", &ofst.y, -50, 50);
+                ImGui::SliderFloat("Scale", &scale,0.1,10);
+                ImGui::TreePop();
+            }
+        }
+        fl.configImGUI();
+        fluidParticle::setupImGUI();
         ImGui::End();
         transform temp_tr;
         
+        ImGui::ShowDemoWindow();
         //temp_tr.setPosition(glm::vec3(ofst.x,ofst.y,-ofst.z));
         temp_tr.setScale(glm::vec3(scale));
 
         sceneTransform::change_LookAt(glm::vec3(ofst.x,ofst.y,-ofst.z));
         //cube.setTransform(temp_tr);
         fl.setAllParticlesScale(temp_tr);
-        
+
+        fl.update();
         glClear(GL_COLOR_BUFFER_BIT);
         model::renderAllModels();
         ImGui::Render();
