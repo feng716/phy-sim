@@ -110,9 +110,10 @@ void meshFluid::spawnRate(float rate){
     static float lastSpawnRateTime=0;
     if(glfwGetTime()-lastSpawnRateTime>rate){
         lastSpawnRateTime=glfwGetTime();
-        indexModel iModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
-        iModel.setPosition(glm::vec3(0,0,0));
-        particle.push_back(new IFluidParticle(&iModel,particle.size(),&particle,this));
+        indexModel* pM=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+        pM->setPosition(glm::vec3(0,0,0));
+        particle.push_back(new IFluidParticle(
+            pM,particle.size(),&particle,this));
     }
 }
 
@@ -132,7 +133,7 @@ void fluidParticle::gravity(){
 }
 
 void fluidParticle::lifeTick(){
-    if(glfwGetTime()-spawnRawTime>maxLife) {
+    if(glfwGetTime()-spawnRawTime>maxLife&&!shouldBeRemoveFromVec) {
         //ownerVec->erase(ownerVec->begin()+currentIndex);
         shouldBeRemoveFromVec=1;
         spdlog::info("particle{}:become death",currentIndex);
@@ -143,6 +144,9 @@ void fluidParticle::boxCollision(){
 void fluidParticle::solveAndApply(){
     velocity+=sceneTransform::getTimestep()*force/mass;
     particle->addPosition(velocity*sceneTransform::getTimestep());
+
+    //test purpose, should be removed
+    
     //spdlog::info("pos.y:{}", particle->getPosition().y);
 }
 fluidParticle::~fluidParticle(){
