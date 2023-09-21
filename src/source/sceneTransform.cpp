@@ -8,3 +8,5 @@ void sceneTransform::changeCursorPos(float xpos,float ypos){
     cursorXPos=xpos;
     cursorYPos=ypos;
 }
+
+float sceneTransform::deltaTime=0;

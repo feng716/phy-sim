@@ -103,7 +103,7 @@ void meshFluid::spawnBurstInstantaneous(int numParticle){
 
 void meshFluid::setupImGUI(){
     if(ImGui::CollapsingHeader("Emmiter properties")){
-        ImGui::SliderFloat("SpawnRate", &numSpawnRate,0, 0.5);
+        ImGui::SliderFloat("SpawnRate", &numSpawnRate,0, 10);
     }
 }
 void meshFluid::spawnRate(float rate){
@@ -143,10 +143,10 @@ void fluidParticle::boxCollision(){
 }
 void fluidParticle::solveAndApply(){
     velocity+=sceneTransform::getTimestep()*force/mass;
-    particle->addPosition(velocity*sceneTransform::getTimestep());
+    //particle->addPosition(velocity*sceneTransform::getTimestep());
 
     //test purpose, should be removed
-    
+    particle->addPosition(glm::vec3(0,0,1)*sceneTransform::getdeltaTime());
     //spdlog::info("pos.y:{}", particle->getPosition().y);
 }
 fluidParticle::~fluidParticle(){

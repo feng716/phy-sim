@@ -100,6 +100,8 @@ int main(){
     ofst.z=50;
     bool test=false;
     while(!glfwWindowShouldClose(window)){
+        static float lastUpdateTime=0;
+        lastUpdateTime=glfwGetTime();
         static float scale=1;
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
@@ -136,6 +138,7 @@ int main(){
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        sceneTransform::change_deltaTime(glfwGetTime()-lastUpdateTime);
     }
     glfwTerminate();
     return 0;

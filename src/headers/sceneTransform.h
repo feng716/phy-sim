@@ -7,13 +7,15 @@
         private:
 class sceneTransform{
 private:
-    static float STATIC_REGISTER_NAME(Timestep);
+    static float STATIC_REGISTER_NAME(Timestep)
     static glm::mat4 STATIC_REGISTER_NAME(perspectiveMat)
-    static glm::vec3 STATIC_REGISTER_NAME(LookAt);
+    static glm::vec3 STATIC_REGISTER_NAME(LookAt)
     static float STATIC_REGISTER_NAME(cursorXPos)
     static float STATIC_REGISTER_NAME(cursorYPos)
     static float STATIC_REGISTER_NAME(windowW)
     static float STATIC_REGISTER_NAME(windowH)
+    static float STATIC_REGISTER_NAME(deltaTime)
+    
 public:
     static void changeCursorPos(float,float);
 };
