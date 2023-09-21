@@ -63,11 +63,6 @@ meshFluid::meshFluid(int l,int w,int h,float interval){
         }
     }
 }
-void meshFluid::configImGUI(){
-    if(ImGui::CollapsingHeader("Fluid")){
-        ImGui::Text("meshFluid");
-    }
-}
 
 meshFluid::~meshFluid(){
     for(auto i:particle) delete i;
@@ -78,7 +73,7 @@ void meshFluid::setAllParticlesScale(transform& iTr){
 }
 
 void meshFluid::update(){
-    
+    emitterUpdate();
     for(auto i:particle) i->update();
     for(int i=0;i<particle.size();++i){
         if(particle[i]->getShouldBeRemoveFromVec()) {
@@ -89,9 +84,38 @@ void meshFluid::update(){
     }
 }
 
-void meshFluid::particleSpawn(){
-    
+void meshFluid::emitterUpdate(){
+    //actually should inherit this class and implement this function to have customized behaviour
+    spawnInstantOnce=0;
+    spawnRate(numSpawnRate);
 }
+
+void meshFluid::spawnBurstInstantaneous(int numParticle){
+    static float lastSpawnBurstTime=0;
+    if(lastSpawnBurstTime==0&&spawnInstantOnce){
+        for(int i=0;i<numParticle;i++){
+            indexModel iModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+            iModel.setPosition(glm::vec3(0,0,0));
+            particle.push_back(new IFluidParticle(&iModel,particle.size(),&particle,this));
+        }
+    }
+}
+
+void meshFluid::setupImGUI(){
+    if(ImGui::CollapsingHeader("Emmiter properties")){
+        ImGui::SliderFloat("SpawnRate", &numSpawnRate,0, 0.5);
+    }
+}
+void meshFluid::spawnRate(float rate){
+    static float lastSpawnRateTime=0;
+    if(glfwGetTime()-lastSpawnRateTime>rate){
+        lastSpawnRateTime=glfwGetTime();
+        indexModel iModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+        iModel.setPosition(glm::vec3(0,0,0));
+        particle.push_back(new IFluidParticle(&iModel,particle.size(),&particle,this));
+    }
+}
+
 fluidParticle::fluidParticle(model* modelPtr,int index,std::vector<IFluidParticle*>* iList,meshFluid* iParent){//will take the ownership
     particle=modelPtr;
     force=glm::vec3(0,0,0);
@@ -128,6 +152,7 @@ fluidParticle::~fluidParticle(){
 void fluidParticle::setupImGUI(){
     if(ImGui::CollapsingHeader("Particle Attribute")){
         ImGui::InputFloat("MaxLife",&maxLife);
+
     }
 }
 IFluidParticle::IFluidParticle(model* modelPtr,int index,std::vector<IFluidParticle*>* iList,meshFluid* iParent)

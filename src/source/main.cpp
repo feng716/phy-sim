@@ -114,8 +114,9 @@ int main(){
                 ImGui::TreePop();
             }
         }
-        fl.configImGUI();
+        fl.setupImGUI();
         fluidParticle::setupImGUI();
+
         ImGui::End();
         transform temp_tr;
         

@@ -13,8 +13,6 @@ public:
 };
 class fluid: public model{//fluid renderer
 private:
-    float lastBurstSpawnTime;
-    float lastRateSpawnTime;
     int numParticleLength;
     int numParticleWidth;
     int numParticleHeight;
@@ -70,15 +68,21 @@ public:
 class meshFluid{
 friend class fluidParticle;
 private:
+    float numSpawnRate;
+    bool spawnInstantOnce;
+    float lastRateSpawnTime;
     int numParticleLength;
     int numParticleWidth;
     int numParticleHeight;
     std::vector<IFluidParticle*> particle;
+protected:
+    void spawnBurstInstantaneous(int numParticle);
+    void spawnRate(float rate);
 public:
+    void setupImGUI();
     ~meshFluid();
     void setAllParticlesScale(transform& iTr);
-    void particleSpawn();
+    void emitterUpdate();
     void update();
     meshFluid(int l,int w,int h,float);
-    void configImGUI();
 };
