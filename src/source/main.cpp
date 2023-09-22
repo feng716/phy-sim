@@ -120,17 +120,18 @@ int main(){
         fluidParticle::setupImGUI();
 
         ImGui::End();
-        transform temp_tr;
         
         ImGui::ShowDemoWindow();
         //temp_tr.setPosition(glm::vec3(ofst.x,ofst.y,-ofst.z));
-        temp_tr.setScale(glm::vec3(scale));
 
         sceneTransform::change_LookAt(glm::vec3(ofst.x,ofst.y,-ofst.z));
-        //cube.setTransform(temp_tr);
-        fl.setAllParticlesScale(temp_tr);
+        //cube.setTransform(temp_tr);m::getdeltaTime());
 
         fl.update();
+        transform temp_tr;
+        temp_tr.setScale(glm::vec3(scale));
+        fl.setAllParticlesScale(temp_tr);
+
         glClear(GL_COLOR_BUFFER_BIT);
         model::renderAllModels();
         ImGui::Render();

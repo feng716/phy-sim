@@ -3,13 +3,15 @@
 #include "model.h"
 #include <GLFW/glfw3.h>
 #include <cstddef>
+#include <cstdlib>
+#include <ctime>
 #include <fmt/format.h>
 #include <glm/detail/qualifier.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <imgui.h>
 #include <spdlog/spdlog.h>
 #include "sceneTransform.h"
-float fluidParticle::gravityAclr=-980;
+float fluidParticle::gravityAclr=-98;
 float fluidParticle::mass=10;
 float fluidParticle::maxLife=5;
 fluid::fluid(char* iVertPath,char* iFragPath,int l,int w,int h,float iInterval):
@@ -53,15 +55,16 @@ meshFluid::meshFluid(int l,int w,int h,float interval){
     numParticleHeight=h;
     numParticleLength=l;
     numParticleWidth=w;
-    for(int i=0;i<numParticleLength;i++){
-        for(int j=0;j<numParticleHeight;j++){
-            for(int k=0;k<numParticleHeight;k++){
-                model* iModel=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
-                iModel->setPosition(glm::vec3(i*interval,j*interval,k*interval));
-                particle.push_back(new IFluidParticle(iModel,particle.size(),&particle,this));
-            }
-        }
-    }
+    std::srand(std::time(nullptr));
+    //for(int i=0;i<numParticleLength;i++){
+        //for(int j=0;j<numParticleHeight;j++){
+            //for(int k=0;k<numParticleHeight;k++){
+                //model* iModel=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+                //iModel->setPosition(glm::vec3(i*interval,j*interval,k*interval));
+                //particle.push_back(new IFluidParticle(iModel,particle.size(),&particle,this));
+            //}
+        //}
+    //}
 }
 
 meshFluid::~meshFluid(){
@@ -74,7 +77,7 @@ void meshFluid::setAllParticlesScale(transform& iTr){
 
 void meshFluid::update(){
     emitterUpdate();
-    for(auto i:particle) i->update();
+    for(auto i:particle) i->particleUpdate();
     for(int i=0;i<particle.size();++i){
         if(particle[i]->getShouldBeRemoveFromVec()) {
             delete particle[i];
@@ -92,7 +95,7 @@ void meshFluid::emitterUpdate(){
 
 void meshFluid::spawnBurstInstantaneous(int numParticle){
     static float lastSpawnBurstTime=0;
-    if(lastSpawnBurstTime==0&&spawnInstantOnce){
+    if(lastSpawnBurstTime==0&&!spawnInstantOnce){
         for(int i=0;i<numParticle;i++){
             indexModel iModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
             iModel.setPosition(glm::vec3(0,0,0));
@@ -103,21 +106,24 @@ void meshFluid::spawnBurstInstantaneous(int numParticle){
 
 void meshFluid::setupImGUI(){
     if(ImGui::CollapsingHeader("Emmiter properties")){
-        ImGui::SliderFloat("SpawnRate", &numSpawnRate,0, 10);
-    }
-}
-void meshFluid::spawnRate(float rate){
-    static float lastSpawnRateTime=0;
-    if(glfwGetTime()-lastSpawnRateTime>rate){
-        lastSpawnRateTime=glfwGetTime();
-        indexModel* pM=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
-        pM->setPosition(glm::vec3(0,0,0));
-        particle.push_back(new IFluidParticle(
-            pM,particle.size(),&particle,this));
+        ImGui::SliderFloat("SpawnRate", &numSpawnRate,0, 100);
     }
 }
 
-fluidParticle::fluidParticle(model* modelPtr,int index,std::vector<IFluidParticle*>* iList,meshFluid* iParent){//will take the ownership
+void meshFluid::spawnRate(float rate){
+    static float lastSpawnRateTime=0;
+    if(glfwGetTime()-lastSpawnRateTime>1/rate){
+        lastSpawnRateTime=glfwGetTime();
+        indexModel* pM=new indexModel("3dmodels/sphere.fbx","3dmodels/cube.vert","3dmodels/cube.frag",0);
+        
+        particle.push_back((new IFluidParticle(
+            pM,particle.size(),&particle,this))->particleSpawn());
+    }
+}
+
+void IMeshFluid::emitterUpdate(){
+}
+fluidParticle::fluidParticle(model* modelPtr,int index,std::vector<fluidParticle*>* iList,meshFluid* iParent){//will take the ownership
     particle=modelPtr;
     force=glm::vec3(0,0,0);
     velocity=glm::vec3(0,0,0);
@@ -129,7 +135,7 @@ fluidParticle::fluidParticle(model* modelPtr,int index,std::vector<IFluidParticl
 }
 
 void fluidParticle::gravity(){
-    force+=glm::vec3(0,-mass*gravityAclr,0);
+    force+=glm::vec3(0,mass*gravityAclr,0);
 }
 
 void fluidParticle::lifeTick(){
@@ -140,13 +146,24 @@ void fluidParticle::lifeTick(){
     }
 }
 void fluidParticle::boxCollision(){
+    
+}
+
+void fluidParticle::boxLocation(float width,float height,float length){
+    
+    float x=(float)std::rand()/RAND_MAX*width;
+    float y=(float)std::rand()/RAND_MAX*height;
+    float z=(float)std::rand()/RAND_MAX*length;
+    int dbg=std::rand();
+    particle->setPosition(glm::vec3(x,y,z));
+    
 }
 void fluidParticle::solveAndApply(){
-    velocity+=sceneTransform::getTimestep()*force/mass;
-    //particle->addPosition(velocity*sceneTransform::getTimestep());
+    velocity+=sceneTransform::getdeltaTime()*force/mass;
+    particle->addPosition(velocity*sceneTransform::getTimestep());
 
     //test purpose, should be removed
-    particle->addPosition(glm::vec3(0,0,1)*sceneTransform::getdeltaTime());
+    //particle->addPosition(glm::vec3(0,0,1)*sceneTransform::getdeltaTime());
     //spdlog::info("pos.y:{}", particle->getPosition().y);
 }
 fluidParticle::~fluidParticle(){
@@ -159,5 +176,6 @@ void fluidParticle::setupImGUI(){
 
     }
 }
-IFluidParticle::IFluidParticle(model* modelPtr,int index,std::vector<IFluidParticle*>* iList,meshFluid* iParent)
+
+IFluidParticle::IFluidParticle(model* modelPtr,int index,std::vector<fluidParticle*>* iList,meshFluid* iParent)
     :fluidParticle(modelPtr,index,iList,iParent){}

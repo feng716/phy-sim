@@ -7,3 +7,4 @@ src/headers/KHR
 src/source/glad.c
 imgui.ini
 *.spv
+.VSCodeCounter
